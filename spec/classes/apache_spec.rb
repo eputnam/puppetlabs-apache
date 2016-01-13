@@ -16,7 +16,7 @@ describe 'apache', :type => :class do
       }
     end
     it { is_expected.to contain_class("apache::params") }
-    it { is_expected.to contain_package("httpd").with(
+    it { is_expected.to contain_package("${service_name}").with(
       'notify' => 'Class[Apache::Service]',
       'ensure' => 'installed'
       )
@@ -28,7 +28,7 @@ describe 'apache', :type => :class do
       'ensure'  => 'directory'
       )
     }
-    it { is_expected.to contain_file("/etc/apache2/sites-enabled").with(
+    it { is_expected.to contain_file("${conf_dir}/sites-enabled").with(
       'ensure'  => 'directory',
       'recurse' => 'true',
       'purge'   => 'true',
@@ -36,7 +36,7 @@ describe 'apache', :type => :class do
       'require' => 'Package[httpd]'
       )
     }
-    it { is_expected.to contain_file("/etc/apache2/mods-enabled").with(
+    it { is_expected.to contain_file("${conf_dir}/mods-enabled").with(
       'ensure'  => 'directory',
       'recurse' => 'true',
       'purge'   => 'true',
@@ -44,7 +44,7 @@ describe 'apache', :type => :class do
       'require' => 'Package[httpd]'
       )
     }
-    it { is_expected.to contain_file("/etc/apache2/mods-available").with(
+    it { is_expected.to contain_file("${conf_dir}/mods-available").with(
       'ensure'  => 'directory',
       'recurse' => 'true',
       'purge'   => 'false',
@@ -52,7 +52,7 @@ describe 'apache', :type => :class do
       'require' => 'Package[httpd]'
       )
     }
-    it { is_expected.to contain_concat("/etc/apache2/ports.conf").with(
+    it { is_expected.to contain_concat("${conf_dir}/ports.conf").with(
       'owner'   => 'root',
       'group'   => 'root',
       'mode'    => '0644',
@@ -71,13 +71,13 @@ describe 'apache', :type => :class do
       'env'
     ].each do |modname|
       it { is_expected.to contain_file("#{modname}.load").with(
-        'path'   => "/etc/apache2/mods-available/#{modname}.load",
+        'path'   => "${conf_dir}/mods-available/#{modname}.load",
         'ensure' => 'file'
       ) }
       it { is_expected.to contain_file("#{modname}.load symlink").with(
-        'path'   => "/etc/apache2/mods-enabled/#{modname}.load",
+        'path'   => "${conf_dir}/mods-enabled/#{modname}.load",
         'ensure' => 'link',
-        'target' => "/etc/apache2/mods-available/#{modname}.load"
+        'target' => "${conf_dir}/mods-available/#{modname}.load"
       ) }
       it { is_expected.not_to contain_file("#{modname}.conf") }
       it { is_expected.not_to contain_file("#{modname}.conf symlink") }
@@ -88,7 +88,7 @@ describe 'apache', :type => :class do
         { :apache_version => '2.2' }
       end
 
-      it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^Include "/etc/apache2/conf\.d/\*\.conf"$} }
+      it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^Include "${conf_dir}/conf\.d/\*\.conf"$} }
     end
 
     context "with Apache version >= 2.4" do
@@ -99,7 +99,7 @@ describe 'apache', :type => :class do
         }
       end
 
-      it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^IncludeOptional "/etc/apache2/conf\.d/\*\.conf"$} }
+      it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^IncludeOptional "${conf_dir}/conf\.d/\*\.conf"$} }
     end
 
     context "when specifying slash encoding behaviour" do
@@ -107,7 +107,7 @@ describe 'apache', :type => :class do
         { :allow_encoded_slashes => 'nodecode' }
       end
 
-      it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^AllowEncodedSlashes nodecode$} }
+      it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^AllowEncodedSlashes nodecode$} }
     end
 
     context "when specifying fileETag behaviour" do
@@ -123,7 +123,7 @@ describe 'apache', :type => :class do
         { :default_charset => 'none' }
       end
 
-      it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^AddDefaultCharset none$} }
+      it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^AddDefaultCharset none$} }
     end
 
     # Assert that both load files and conf files are placed and symlinked for these mods
@@ -138,22 +138,22 @@ describe 'apache', :type => :class do
       'setenvif',
     ].each do |modname|
       it { is_expected.to contain_file("#{modname}.load").with(
-        'path'   => "/etc/apache2/mods-available/#{modname}.load",
+        'path'   => "${conf_dir}/mods-available/#{modname}.load",
         'ensure' => 'file'
       ) }
       it { is_expected.to contain_file("#{modname}.load symlink").with(
-        'path'   => "/etc/apache2/mods-enabled/#{modname}.load",
+        'path'   => "${conf_dir}/mods-enabled/#{modname}.load",
         'ensure' => 'link',
-        'target' => "/etc/apache2/mods-available/#{modname}.load"
+        'target' => "${conf_dir}/mods-available/#{modname}.load"
       ) }
       it { is_expected.to contain_file("#{modname}.conf").with(
-        'path'   => "/etc/apache2/mods-available/#{modname}.conf",
+        'path'   => "${conf_dir}/mods-available/#{modname}.conf",
         'ensure' => 'file'
       ) }
       it { is_expected.to contain_file("#{modname}.conf symlink").with(
-        'path'   => "/etc/apache2/mods-enabled/#{modname}.conf",
+        'path'   => "${conf_dir}/mods-enabled/#{modname}.conf",
         'ensure' => 'link',
-        'target' => "/etc/apache2/mods-available/#{modname}.conf"
+        'target' => "${conf_dir}/mods-available/#{modname}.conf"
       ) }
     end
 
@@ -170,14 +170,14 @@ describe 'apache', :type => :class do
             { :default_type => 'none' }
           end
 
-          it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^DefaultType none$} }
+          it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^DefaultType none$} }
         end
         context "when default_type => 'text/plain'" do
           let :params do
             { :default_type => 'text/plain' }
           end
 
-          it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^DefaultType text/plain$} }
+          it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^DefaultType text/plain$} }
         end
       end
 
@@ -187,7 +187,7 @@ describe 'apache', :type => :class do
             :apache_version => '2.4',
           }
         end
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").without_content %r{^DefaultType [.]*$} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").without_content %r{^DefaultType [.]*$} }
       end
     end
 
@@ -198,7 +198,7 @@ describe 'apache', :type => :class do
         end
 
         it { is_expected.not_to contain_user('www-data') }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^User www-data\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^User www-data\n} }
       end
     end
     describe "Don't create group resource" do
@@ -208,7 +208,7 @@ describe 'apache', :type => :class do
         end
 
         it { is_expected.not_to contain_group('www-data') }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^Group www-data\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^Group www-data\n} }
       end
     end
 
@@ -221,8 +221,8 @@ describe 'apache', :type => :class do
           } }
         end
 
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" vhost_common\n} }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" vhost_combined\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" vhost_common\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" vhost_combined\n} }
       end
     end
 
@@ -235,11 +235,11 @@ describe 'apache', :type => :class do
           } }
         end
 
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" common\n} }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").without_content %r{^LogFormat "%h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" common\n} }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
-        it { is_expected.to contain_file("/etc/apache2/apache2.conf").without_content %r{^LogFormat "%h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" common\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").without_content %r{^LogFormat "%h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" common\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
+        it { is_expected.to contain_file("${conf_dir}/apache2.conf").without_content %r{^LogFormat "%h %l %u %t \"%r\" %>s %b \"%\{Referer\}i\" \"%\{User-agent\}i\"" combined\n} }
       end
     end
 
@@ -329,7 +329,7 @@ describe 'apache', :type => :class do
       'ensure'  => 'directory'
       )
     }
-    it { is_expected.to contain_file("/etc/httpd/conf.d").with(
+    it { is_expected.to contain_file("${conf_dir}/conf.d").with(
       'ensure'  => 'directory',
       'recurse' => 'true',
       'purge'   => 'true',
@@ -337,7 +337,7 @@ describe 'apache', :type => :class do
       'require' => 'Package[httpd]'
       )
     }
-    it { is_expected.to contain_concat("/etc/httpd/conf/ports.conf").with(
+    it { is_expected.to contain_concat("${conf_dir}/conf/ports.conf").with(
       'owner'   => 'root',
       'group'   => 'root',
       'mode'    => '0644',
@@ -347,14 +347,14 @@ describe 'apache', :type => :class do
     describe "Alternate confd/mod/vhosts directory" do
       let :params do
         {
-          :vhost_dir => '/etc/httpd/site.d',
-          :confd_dir => '/etc/httpd/conf.d',
-          :mod_dir   => '/etc/httpd/mod.d',
+          :vhost_dir => '${conf_dir}/site.d',
+          :confd_dir => '${conf_dir}/conf.d',
+          :mod_dir   => '${conf_dir}/mod.d',
         }
       end
 
       ['mod.d','site.d','conf.d'].each do |dir|
-        it { is_expected.to contain_file("/etc/httpd/#{dir}").with(
+        it { is_expected.to contain_file("${conf_dir}/#{dir}").with(
           'ensure'  => 'directory',
           'recurse' => 'true',
           'purge'   => 'true',
@@ -375,10 +375,10 @@ describe 'apache', :type => :class do
         'env',
       ].each do |modname|
         it { is_expected.to contain_file("#{modname}.load").with_path(
-          "/etc/httpd/mod.d/#{modname}.load"
+          "${conf_dir}/mod.d/#{modname}.load"
         ) }
         it { is_expected.not_to contain_file("#{modname}.conf").with_path(
-          "/etc/httpd/mod.d/#{modname}.conf"
+          "${conf_dir}/mod.d/#{modname}.conf"
         ) }
       end
 
@@ -394,10 +394,10 @@ describe 'apache', :type => :class do
         'setenvif',
       ].each do |modname|
         it { is_expected.to contain_file("#{modname}.load").with_path(
-          "/etc/httpd/mod.d/#{modname}.load"
+          "${conf_dir}/mod.d/#{modname}.load"
         ) }
         it { is_expected.to contain_file("#{modname}.conf").with_path(
-          "/etc/httpd/mod.d/#{modname}.conf"
+          "${conf_dir}/mod.d/#{modname}.conf"
         ) }
       end
 
@@ -406,7 +406,7 @@ describe 'apache', :type => :class do
           { :apache_version => '2.2' }
         end
 
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Include "/etc/httpd/conf\.d/\*\.conf"$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^Include "${conf_dir}/conf\.d/\*\.conf"$} }
       end
 
       context "with Apache version >= 2.4" do
@@ -417,7 +417,7 @@ describe 'apache', :type => :class do
           }
         end
 
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^IncludeOptional "/etc/httpd/conf\.d/\*\.conf"$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^IncludeOptional "${conf_dir}/conf\.d/\*\.conf"$} }
       end
 
       context "with Apache version < 2.4" do
@@ -428,7 +428,7 @@ describe 'apache', :type => :class do
           }
         end
 
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^RewriteLock /var/lock/subsys/rewrite-lock$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^RewriteLock /var/lock/subsys/rewrite-lock$} }
       end
 
       context "with Apache version < 2.4" do
@@ -438,7 +438,7 @@ describe 'apache', :type => :class do
           }
         end
 
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").without_content %r{^RewriteLock [.]*$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").without_content %r{^RewriteLock [.]*$} }
       end
 
       context "with Apache version >= 2.4" do
@@ -448,7 +448,7 @@ describe 'apache', :type => :class do
             :rewrite_lock => '/var/lock/subsys/rewrite-lock'
           }
         end
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").without_content %r{^RewriteLock [.]*$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").without_content %r{^RewriteLock [.]*$} }
       end
 
       context "when specifying slash encoding behaviour" do
@@ -456,7 +456,7 @@ describe 'apache', :type => :class do
           { :allow_encoded_slashes => 'nodecode' }
         end
 
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^AllowEncodedSlashes nodecode$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^AllowEncodedSlashes nodecode$} }
       end
 
       context "when specifying default character set" do
@@ -464,7 +464,7 @@ describe 'apache', :type => :class do
           { :default_charset => 'none' }
         end
 
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^AddDefaultCharset none$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^AddDefaultCharset none$} }
       end
 
       context "with Apache version < 2.4" do
@@ -479,14 +479,14 @@ describe 'apache', :type => :class do
             { :default_type => 'none' }
           end
 
-          it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^DefaultType none$} }
+          it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^DefaultType none$} }
         end
         context "when default_type => 'text/plain'" do
           let :params do
             { :default_type => 'text/plain' }
           end
 
-          it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^DefaultType text/plain$} }
+          it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^DefaultType text/plain$} }
         end
       end
 
@@ -496,12 +496,12 @@ describe 'apache', :type => :class do
             :apache_version => '2.4',
           }
         end
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").without_content %r{^DefaultType [.]*$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").without_content %r{^DefaultType [.]*$} }
       end
 
-      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Include "/etc/httpd/site\.d/\*"$} }
-      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Include "/etc/httpd/mod\.d/\*\.conf"$} }
-      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Include "/etc/httpd/mod\.d/\*\.load"$} }
+      it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^Include "${conf_dir}/site\.d/\*"$} }
+      it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^Include "${conf_dir}/mod\.d/\*\.conf"$} }
+      it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^Include "${conf_dir}/mod\.d/\*\.load"$} }
     end
 
     describe "Alternate conf directory" do
@@ -512,16 +512,16 @@ describe 'apache', :type => :class do
       it { is_expected.to contain_file("/opt/rh/root/etc/httpd/conf/httpd.conf").with(
         'ensure'  => 'file',
         'notify'  => 'Class[Apache::Service]',
-        'require' => ['Package[httpd]', 'Concat[/etc/httpd/conf/ports.conf]'],
+        'require' => ['Package[httpd]', 'File[${conf_dir}/conf/ports.conf]'],
       ) }
     end
 
     describe "Alternate conf.d directory" do
       let :params do
-        { :confd_dir => '/etc/httpd/special_conf.d' }
+        { :confd_dir => '${conf_dir}/special_conf.d' }
       end
 
-      it { is_expected.to contain_file("/etc/httpd/special_conf.d").with(
+      it { is_expected.to contain_file("${conf_dir}/special_conf.d").with(
         'ensure'  => 'directory',
         'recurse' => 'true',
         'purge'   => 'true',
@@ -570,13 +570,13 @@ describe 'apache', :type => :class do
         let :params do
           { :conf_template => 'apache/httpd.conf.erb' }
         end
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^# Security\n} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^# Security\n} }
       end
       context "with non-default" do
         let :params do
           { :conf_template => 'site_apache/fake.conf.erb' }
         end
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Fake template for rspec.$} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^Fake template for rspec.$} }
       end
     end
 
@@ -614,7 +614,7 @@ describe 'apache', :type => :class do
         end
 
         it { is_expected.not_to contain_user('apache') }
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^User apache\n} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^User apache\n} }
       end
     end
     describe "Don't create group resource" do
@@ -624,7 +624,7 @@ describe 'apache', :type => :class do
         end
 
         it { is_expected.not_to contain_group('apache') }
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Group apache\n} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^Group apache\n} }
 
       end
     end
@@ -643,13 +643,13 @@ describe 'apache', :type => :class do
         let :params do
           { :sendfile => 'On' }
         end
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^EnableSendfile On\n} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^EnableSendfile On\n} }
       end
       context "Off" do
         let :params do
           { :sendfile => 'Off' }
         end
-        it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^EnableSendfile Off\n} }
+        it { is_expected.to contain_file("${conf_dir}/conf/httpd.conf").with_content %r{^EnableSendfile Off\n} }
       end
     end
     context "on Fedora" do
@@ -791,21 +791,21 @@ describe 'apache', :type => :class do
       'ensure'  => 'directory'
       )
     }
-    it { is_expected.to contain_file("/etc/apache2/vhosts.d").with(
+    it { is_expected.to contain_file("${conf_dir}/vhosts.d").with(
       'ensure'  => 'directory',
       'recurse' => 'true',
       'purge'   => 'true',
       'notify'  => 'Class[Apache::Service]',
       'require' => 'Package[httpd]'
     ) }
-    it { is_expected.to contain_file("/etc/apache2/modules.d").with(
+    it { is_expected.to contain_file("${conf_dir}/modules.d").with(
       'ensure'  => 'directory',
       'recurse' => 'true',
       'purge'   => 'true',
       'notify'  => 'Class[Apache::Service]',
       'require' => 'Package[httpd]'
     ) }
-    it { is_expected.to contain_concat("/etc/apache2/ports.conf").with(
+    it { is_expected.to contain_concat("${conf_dir}/ports.conf").with(
       'owner'   => 'root',
       'group'   => 'wheel',
       'mode'    => '0644',
