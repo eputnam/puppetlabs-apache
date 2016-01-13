@@ -43,6 +43,7 @@ class apache (
   $timeout                                                       = '120',
   $httpd_dir                                                     = $::apache::params::httpd_dir,
   $server_root                                                   = $::apache::params::server_root,
+  $conf_file                                                     = $::apache::params::conf_file,
   $conf_dir                                                      = $::apache::params::conf_dir,
   $confd_dir                                                     = $::apache::params::confd_dir,
   $vhost_dir                                                     = $::apache::params::vhost_dir,
@@ -54,7 +55,6 @@ class apache (
   $lib_path                                                      = $::apache::params::lib_path,
   $conf_template                                                 = $::apache::params::conf_template,
   $servername                                                    = $::apache::params::servername,
-  $pidfile                                                       = $::apache::params::pidfile,
   Optional[Stdlib::Absolutepath] $rewrite_lock                   = undef,
   Boolean $manage_user                                           = true,
   Boolean $manage_group                                          = true,
@@ -157,6 +157,12 @@ class apache (
     service_restart => $service_restart,
   }
 
+  file { "/etc/sysconfig/$service_name":
+	content => template('apache/httpd_sysconfig.erb'),
+	mode    => 0755,
+	ensure  => file,
+  }
+
   # Deprecated backwards-compatibility
   if $purge_vdir {
     warning('Class[\'apache\'] parameter purge_vdir is deprecated in favor of purge_configs')
@@ -176,9 +182,19 @@ class apache (
     path => '/bin:/sbin:/usr/bin:/usr/sbin',
   }
 
-  exec { "mkdir ${confd_dir}":
-    creates => $confd_dir,
-    require => Package['httpd'],
+ if ! defined(File[$conf_dir]) {
+    exec { "mkdir -p ${conf_dir}":
+      creates => $conf_dir,
+      user    => 'root',
+      group   => $group,
+    }
+    file { $conf_dir:
+      ensure  => directory,
+      recurse => true,
+      purge   => $purge_conf,
+      notify  => Class['Apache::Service'],
+      require => [Exec["mkdir -p ${conf_dir}"], Package['httpd']],
+    }
   }
   file { $confd_dir:
     ensure  => directory,
@@ -190,7 +206,7 @@ class apache (
   }
 
   if ! defined(File[$mod_dir]) {
-    exec { "mkdir ${mod_dir}":
+    exec { "mkdir -p ${mod_dir}":
       creates => $mod_dir,
       require => Package['httpd'],
     }
@@ -294,6 +310,51 @@ class apache (
       ]:
         ensure  => absent,
         require => Package['httpd'],
+  if $::apache::conf_dir and $::apache::conf_file {
+    case $::osfamily {
+      'debian': {
+      	$pidfile              = "\${APACHE_PID_FILE}"
+        $error_log            = 'error.log'
+        $scriptalias          = '/usr/lib/cgi-bin'
+        $access_log_file      = 'access.log'
+      }
+      'redhat': {
+      	$pidfile              = "run/$service_name.pid"
+        $error_log            = 'error_log'
+        $scriptalias          = '/var/www/cgi-bin'
+        $access_log_file      = 'access_log'
+      }
+      'freebsd': {
+      	$pidfile              = "/var/run/$service_name.pid"
+        $error_log            = 'httpd-error.log'
+        $scriptalias          = '/usr/local/www/apache24/cgi-bin'
+        $access_log_file      = 'httpd-access.log'
+      } 'gentoo': {
+      	$pidfile              = "/run/$service_name.pid"
+        $error_log            = 'error.log'
+        $error_documents_path = '/usr/share/apache2/error'
+        $scriptalias          = '/var/www/localhost/cgi-bin'
+        $access_log_file      = 'access.log'
+
+        ::portage::makeconf { 'apache2_modules':
+          content => $default_mods,
+        }
+        file { [
+          '/etc/apache2/modules.d/.keep_www-servers_apache-2',
+          '/etc/apache2/vhosts.d/.keep_www-servers_apache-2'
+        ]:
+          ensure  => absent,
+          require => Package['httpd'],
+        }
+      }
+      'Suse': {
+      	$pidfile              = "/var/run/$service_name.pid"
+        $error_log            = 'error.log'
+        $scriptalias          = '/usr/lib/cgi-bin'
+        $access_log_file      = 'access.log'
+      }
+      default: {
+        fail("Unsupported osfamily ${::osfamily}")
       }
     }
 
@@ -326,7 +387,7 @@ class apache (
     # - $trace_enable
     # - $rewrite_lock
     # - $root_directory_secured
-    file { "${::apache::conf_dir}/${::apache::params::conf_file}":
+    file { "${::apache::conf_dir}/${::apache::conf_file}":
       ensure  => file,
       content => template($conf_template),
       notify  => Class['Apache::Service'],
@@ -359,6 +420,12 @@ class apache (
     $default_ssl_vhost_ensure = $default_ssl_vhost ? {
       true  => 'present',
       false => 'absent'
+    }
+
+    if $::operatingsystem == 'Ubuntu' and $::lsbdistrelease == '10.04' {
+       $verify_command = '/usr/sbin/apache2ctl -t'
+    } else {
+       $verify_command = "/usr/sbin/apachectl -t -f ${conf_dir}/${service_name}.conf"
     }
 
     ::apache::vhost { 'default':
