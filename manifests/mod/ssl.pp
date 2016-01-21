@@ -111,7 +111,7 @@ class apache::mod::ssl (
     path    => $::apache::_ssl_file,
     mode    => $::apache::file_mode,
     content => template('apache/mod/ssl.conf.erb'),
-    require => Exec["mkdir ${::apache::mod_dir}"],
+    require => Exec["mkdir -p ${::apache::mod_dir}"],
     before  => File[$::apache::mod_dir],
     notify  => Class['apache::service'],
   }
