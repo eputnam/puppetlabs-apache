@@ -62,7 +62,8 @@ class apache::mod::worker (
   $serverlimit         = '25',
   $threadlimit         = '64',
   $listenbacklog       = '511',
-  $apache_version      = undef,
+  $apache_version      = $::apache::apache_version,
+  $service_name        = $::apache::service_name,
 ) {
   include ::apache
   $_apache_version = pick($apache_version, $apache::apache_version)
@@ -98,7 +99,7 @@ class apache::mod::worker (
   file { "${::apache::mod_dir}/worker.conf":
     ensure  => file,
     content => template('apache/mod/worker.conf.erb'),
-    require => Exec["mkdir ${::apache::mod_dir}"],
+    require => Exec["mkdir -p ${::apache::mod_dir}"],
     before  => File[$::apache::mod_dir],
     notify  => Class['apache::service'],
   }
@@ -112,11 +113,11 @@ class apache::mod::worker (
         }
       }
       else {
-        file_line { '/etc/sysconfig/httpd worker enable':
+        file_line { "/etc/sysconfig/${service_name} worker enable":
           ensure  => present,
-          path    => '/etc/sysconfig/httpd',
-          line    => 'HTTPD=/usr/sbin/httpd.worker',
-          match   => '#?HTTPD=/usr/sbin/httpd.worker',
+          path    => "/etc/sysconfig/${service_name}",
+          line    => "HTTPD=/usr/sbin/${service_name}.worker",
+          match   => "#?HTTPD=/usr/sbin/${service_name}.worker",
           require => Package['httpd'],
           notify  => Class['apache::service'],
         }
