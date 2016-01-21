@@ -20,7 +20,7 @@ class apache::mod::negotiation (
     mode    => $::apache::file_mode,
     path    => "${::apache::mod_dir}/negotiation.conf",
     content => template('apache/mod/negotiation.conf.erb'),
-    require => Exec["mkdir ${::apache::mod_dir}"],
+    require => Exec["mkdir -p ${::apache::mod_dir}"],
     before  => File[$::apache::mod_dir],
     notify  => Class['apache::service'],
   }
