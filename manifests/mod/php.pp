@@ -86,7 +86,7 @@ class apache::mod::php (
     content => $manage_content,
     source  => $source,
     require => [
-      Exec["mkdir ${::apache::mod_dir}"],
+      Exec["mkdir -p ${::apache::mod_dir}"],
     ],
     before  => File[$::apache::mod_dir],
     notify  => Class['apache::service'],
