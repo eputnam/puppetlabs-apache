@@ -4,5 +4,3 @@ appveyor.yml:
 Rakefile:
   extra_disabled_lint_checks:
   - 'disable_only_variable_string'
-spec/spec_helper.rb:
-  allow_deprecations: true
